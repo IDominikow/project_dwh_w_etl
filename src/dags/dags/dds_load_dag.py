@@ -11,7 +11,7 @@ from dds_scripts.fct_product_sales_loader import ProductSalesLoader
 from dds_scripts.dm_couriers_loader import CourierLoader
 from dds_scripts.dm_statuses_loader import StatusLoader
 from dds_scripts.dm_order_statuses_loader import OrderStatusesLoader
-from dds_scripts.fct_order_deliveries_loader import OrderDeliveriesLoader
+from dds_scripts.fct_order_payment_details_loader import OrderPaymentsLoader
 from lib import ConnectionBuilder
 
 log = logging.getLogger(__name__)
@@ -85,10 +85,10 @@ def stg_to_dds_load_dag():
         rest_loader = OrderStatusesLoader(dwh_pg_connect, log)
         rest_loader.load_from_stg()  # Вызываем функцию, которая перельет данные.
 
-    @task(task_id="load_order_deliveries") 
-    def load_order_deliveries():
+    @task(task_id="load_order_payments") 
+    def load_order_payments():
         # создаем экземпляр класса, в котором реализована логика.
-        rest_loader = OrderDeliveriesLoader(dwh_pg_connect, log)
+        rest_loader = OrderPaymentsLoader(dwh_pg_connect, log)
         rest_loader.load_from_stg()
 
     # Инициализируем объявленные таски.
@@ -101,11 +101,11 @@ def stg_to_dds_load_dag():
     load_couriers = load_couriers()
     load_statuses = load_statuses()
     load_order_statuses = load_order_statuses()
-    load_order_deliveries = load_order_deliveries()
+    load_order_payments = load_order_payments()
 
     # Далее задаем последовательность выполнения тасков.
     # Т.к. таск один, просто обозначим его здесь.
-    [load_users, load_restaurants, load_timestamps,load_couriers, load_statuses] >> load_products >> load_orders >> load_order_statuses >> [load_product_sales, load_order_deliveries] # type: ignore
+    [load_users, load_restaurants, load_timestamps,load_couriers, load_statuses] >> load_products >> load_orders >> load_order_statuses >> [load_product_sales, load_order_payments] # type: ignore
 
 
 stg_bonus_system_users_dag = stg_to_dds_load_dag()
