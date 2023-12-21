@@ -3,8 +3,8 @@ import logging
 import pendulum
 from airflow.decorators import dag, task
 from airflow.models.variable import Variable
-from stg_scripts.delivery_system_couriers_loader import CouriersLoader
-from stg_scripts.delivery_system_deliveries_loader import DeliveriesLoader
+#from stg_scripts.delivery_system_couriers_loader import CouriersLoader
+from stg_scripts.delivery_system_loader import DeliveriesLoader, CouriersLoader
 from lib import ConnectionBuilder, MongoConnect
 
 log = logging.getLogger(__name__)
@@ -20,18 +20,20 @@ log = logging.getLogger(__name__)
 def origin_to_stg_delivery_system_load():
     # Создаем подключение к базе dwh.
     dwh_pg_connect = ConnectionBuilder.pg_conn("PG_WAREHOUSE_CONNECTION")
+    delivery_headers = Variable.get("DELIVERY_AUTH_PARAMS")
 
     @task(task_id="load_couriers")
     def load_couriers():
         # создаем экземпляр класса, в котором реализована логика.
+
         rest_loader = CouriersLoader(dwh_pg_connect, log)
-        rest_loader.load_from_api()  # Вызываем функцию, которая перельет данные.  
+        rest_loader.load_from_api(delivery_headers)  # Вызываем функцию, которая перельет данные.  
 
     @task(task_id="load_deliveries")
     def load_deliveries():
         # создаем экземпляр класса, в котором реализована логика.
         rest_loader = DeliveriesLoader(dwh_pg_connect, log)
-        rest_loader.load_from_api()  # Вызываем функцию, которая перельет данные.  
+        rest_loader.load_from_api(delivery_headers)  # Вызываем функцию, которая перельет данные.  
 
     coureirs_loader = load_couriers()
     deliveries_loader = load_deliveries()
