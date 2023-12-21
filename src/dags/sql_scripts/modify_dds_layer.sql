@@ -19,8 +19,8 @@ CREATE TABLE dds.dm_orders (
 	CONSTRAINT dm_orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES dds.dm_users(id)
 );
 
-CREATE TABLE dds.fct_order_deliveries (
-	id serial4 NOT NULL,
+CREATE TABLE dds.fct_order_payment_details (
+	id int4 NOT NULL DEFAULT nextval('dds.fct_order_deliveries_id_seq'::regclass),
 	order_id int4 NOT NULL,
 	order_sum numeric(15, 9) NOT NULL,
 	delivery_rate numeric(2, 1) NOT NULL,
