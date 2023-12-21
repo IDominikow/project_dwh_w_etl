@@ -30,13 +30,13 @@ class DdsReader:
         with self._db.client().cursor(row_factory=class_row(ObjModel)) as cur:
             cur.execute(
                 """
-                with cd as (select 
+with cd as (select 
 	                dc.id as courier_id,
                     dc.courier_name  as courier_name,
                     dt."year" as settlement_year,
                     dt."month" as settlement_month,
                     avg(fod.delivery_rate) as rate_avg
-                from dds.fct_order_deliveries fod 
+                from dds.fct_order_payment_details fod 
                     join dds.dm_orders do2 on do2.id = fod.order_id 
                     join dds.dm_order_statuses dos on do2.id = dos.order_id 
                     join dds.dm_statuses ds on dos.status_id = ds.id 
@@ -66,14 +66,16 @@ class DdsReader:
                                 when cd.rate_avg >=4.5 and cd.rate_avg < 4.9 then greatest(fod.order_sum*0.08,175)
                                 when cd.rate_avg >=4.9 then greatest(fod.order_sum*0.1,200)
                                 end) + (sum(fod.delivery_tip_sum)*0.95) as courier_reward_sum
-                from dds.fct_order_deliveries fod 
+                from dds.fct_order_payment_details fod 
                     join dds.dm_orders do2 on do2.id = fod.order_id 
                     join dds.dm_order_statuses dos on do2.id = dos.order_id 
                     join dds.dm_statuses ds on dos.status_id = ds.id 
                     join dds.dm_timestamps dt on dos.timestamp_id = dt.id
                     join dds.dm_couriers dc on do2.courier_id = dc.id
                     join cd on (cd.courier_id, cd.courier_name, cd.settlement_year, cd.settlement_month) = (dc.id, dc.courier_name, dt."year", dt."month")
-                where ds.status_name = 'OPEN'
+                where ds.status_name = 'OPEN' and 
+                dt."year" = extract('year' from now()) and
+                dt."month" = extract('month' from now())
                     group by dc.id, dc.courier_name,dt."year", dt."month", cd.rate_avg
                 """, 
             )
